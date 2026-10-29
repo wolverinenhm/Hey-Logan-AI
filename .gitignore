@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+.npm-cache/
+
+# runtime data: config, generated TLS certificate, screenshots, pairing info
+data/*
+!data/.gitkeep
+
+# local tooling
+.tools/
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini

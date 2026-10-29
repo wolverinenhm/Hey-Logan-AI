@@ -1,0 +1,8 @@
+Runtime data lives here (gitignored).
+
+- `config.json` — generated on first run (access token, ports, agent commands)
+- `certs/` — generated self-signed HTTPS certificate for LAN use
+- `screenshots/` — screenshots taken by the Computer agent
+- `pairing.txt` — last printed pairing link/token
+
+Nothing in this folder is committed to git.

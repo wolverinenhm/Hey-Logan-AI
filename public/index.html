@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b16" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Talk to your PC and your AI agents from your phone or across the room." />
+  <title>Hey AI Bridge</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="26" height="26">
+          <defs>
+            <radialGradient id="logoGrad" cx="35%" cy="30%" r="80%">
+              <stop offset="0%" stop-color="#7ff3ff" />
+              <stop offset="55%" stop-color="#22d3ee" />
+              <stop offset="100%" stop-color="#4f7cff" />
+            </radialGradient>
+          </defs>
+          <circle cx="16" cy="16" r="13" fill="none" stroke="url(#logoGrad)" stroke-width="1.6" opacity="0.7" />
+          <circle cx="16" cy="16" r="8.5" fill="url(#logoGrad)" />
+          <circle cx="16" cy="16" r="4" fill="#070b16" opacity="0.85" />
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>Hey AI <span>Bridge</span></h1>
+        <p id="connLabel">connecting…</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="installBtn" class="ghost-btn hidden" type="button">Install</button>
+      <button id="settingsBtn" class="icon-btn" type="button" aria-label="Open settings">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3.2" />
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.14 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.09a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <button class="orb" id="orb" data-state="idle" type="button" aria-label="Toggle listening">
+        <span class="ring r1" aria-hidden="true"></span>
+        <span class="ring r2" aria-hidden="true"></span>
+        <span class="ring r3" aria-hidden="true"></span>
+        <span class="core" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+            <rect x="9" y="3" width="6" height="11" rx="3" />
+            <path d="M5 11a7 7 0 0 0 14 0" />
+            <path d="M12 18v3" />
+          </svg>
+        </span>
+      </button>
+
+      <div class="status-line">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Tap the orb to start listening</span>
+      </div>
+
+      <p class="say-hint" id="sayHint">
+        Say <em>“Hey Claude Code, …”</em> or <em>“Hey Computer, find my tax PDF in Downloads”</em>
+      </p>
+
+      <div class="controls">
+        <button id="listenBtn" class="btn primary" type="button">Start listening</button>
+        <button id="pttBtn" class="btn secondary" type="button">Hold to talk</button>
+      </div>
+
+      <div class="mic-warning hidden" id="micWarning" role="status"></div>
+    </section>
+
+    <section class="agents-section" aria-labelledby="agentsTitle">
+      <div class="section-head">
+        <h2 id="agentsTitle">Agents</h2>
+        <span class="muted small" id="agentsHint">Tap an agent to talk to it directly</span>
+      </div>
+      <div class="agents" id="agentStrip">
+        <div class="agent-chip skeleton"></div>
+        <div class="agent-chip skeleton"></div>
+        <div class="agent-chip skeleton"></div>
+      </div>
+    </section>
+
+    <section class="log-section" aria-labelledby="logTitle">
+      <div class="section-head">
+        <h2 id="logTitle">Conversation</h2>
+        <button id="clearBtn" class="ghost-btn" type="button">Clear</button>
+      </div>
+      <div class="transcript" id="transcript" aria-live="polite">
+        <div class="empty" id="emptyState">
+          <p class="empty-big">Nothing yet.</p>
+          <p class="muted">Try: <em>“Hey Computer, find my Word documents in Downloads.”</em></p>
+          <p class="muted small">Tip: install this page to your phone’s home screen for one-tap access.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="composer">
+    <form id="textForm" class="composer-inner" autocomplete="off">
+      <input id="textInput" type="text" placeholder="Type a command — e.g. Hey Codex, review my repo"
+             enterkeyhint="send" maxlength="2000" />
+      <button class="send-btn" type="submit" aria-label="Send command">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2 11 13" />
+          <path d="M22 2 15 22l-4-9-9-4z" />
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <dialog id="settingsDialog">
+    <div class="dialog-head">
+      <h2>Settings</h2>
+      <button id="closeSettingsBtn" class="icon-btn" type="button" aria-label="Close settings">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="dialog-body">
+      <section>
+        <h3>Connection</h3>
+        <div class="field">
+          <label for="serverInput">Server</label>
+          <input id="serverInput" type="text" readonly />
+        </div>
+        <div class="field">
+          <label for="tokenInput">Access token</label>
+          <input id="tokenInput" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" />
+        </div>
+        <div class="row">
+          <button id="saveTokenBtn" class="btn small" type="button">Save &amp; reconnect</button>
+          <span class="muted small" id="pairNote"></span>
+        </div>
+
+        <div class="pair-box">
+          <h4>Pair your phone</h4>
+          <img id="qrImg" alt="Pairing QR code" width="180" height="180" />
+          <p class="muted small">Open the server console on your PC and scan the QR code, or copy the pairing link below. The phone must be on the same Wi-Fi network.</p>
+          <button id="copyPairBtn" class="btn small" type="button">Copy pairing link</button>
+          <div class="pair-urls" id="pairUrls"></div>
+        </div>
+      </section>
+
+      <section>
+        <h3>Voice</h3>
+        <div class="field">
+          <label for="langSelect">Recognition language</label>
+          <select id="langSelect"></select>
+        </div>
+        <div class="field">
+          <label for="voiceSelect">Reply voice</label>
+          <select id="voiceSelect"></select>
+        </div>
+        <label class="check-row">
+          <input id="ttsToggle" type="checkbox" />
+          <span>Speak replies on this device</span>
+        </label>
+        <label class="check-row">
+          <input id="followToggle" type="checkbox" />
+          <span>Allow conversation follow-ups for 20 s after a reply (say “open it” without a wake word)</span>
+        </label>
+        <div class="field range-field">
+          <label for="rateInput">Talk speed <span id="rateVal" class="muted"></span></label>
+          <input id="rateInput" type="range" min="0.7" max="1.4" step="0.05" />
+        </div>
+        <button id="testVoiceBtn" class="btn small" type="button">Test voice</button>
+      </section>
+
+      <section>
+        <h3>Agents on this PC</h3>
+        <div class="agent-status-list" id="agentStatusList"></div>
+        <p class="muted small">Agents marked “not installed” can be enabled by installing their CLI or setting its command in <code>data/config.json</code>.</p>
+      </section>
+
+      <section>
+        <h3>Recent sessions</h3>
+        <div class="session-list" id="sessionList"><p class="muted small">Loading…</p></div>
+      </section>
+
+      <section>
+        <h3>About</h3>
+        <p class="muted small">
+          Hey AI Bridge <span id="versionLabel">v1.0.0</span> — a local voice bridge for your PC and AI agents.
+          Voice recognition uses this browser’s speech service (Chrome/Edge); audio may be processed by the browser vendor.
+          The bridge itself never sends your commands to any additional cloud service.
+        </p>
+      </section>
+    </div>
+  </dialog>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script src="/voice.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

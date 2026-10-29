@@ -1,0 +1,37 @@
+{
+  "name": "hey-ai-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Talk to your PC and your AI agents (Claude Code, Codex, DeepSeek Harness, Workbuddy, Gemini) from your Android phone or across the room: wake words, spoken replies, real computer control.",
+  "keywords": [
+    "voice-assistant",
+    "wake-word",
+    "ai-agents",
+    "claude-code",
+    "codex",
+    "deepseek",
+    "gemini",
+    "pwa",
+    "android",
+    "windows",
+    "text-to-speech"
+  ],
+  "license": "MIT",
+  "author": "wolverinenhm",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "setup": "node scripts/setup.js",
+    "icons": "node scripts/make-icons.js",
+    "test": "node test/run.js",
+    "test:isolated": "node --test test/util.test.js test/router.test.js test/computer.test.js test/config.test.js test/security.test.js test/tls.test.js test/voice.test.js test/ui.test.js test/server.test.js"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "selfsigned": "^2.4.1"
+  }
+}

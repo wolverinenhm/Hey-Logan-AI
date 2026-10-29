@@ -1,0 +1,70 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "httpPort": 8787,
+    "httpsPort": 8443,
+    "enableHttp": true,
+    "enableHttps": true
+  },
+  "security": {
+    "token": "XXXX-XXXX-XXXX",
+    "rateLimit": { "windowMs": 300000, "max": 12, "banMs": 600000 }
+  },
+  "speech": {
+    "lang": "en-US",
+    "wakeWindowMs": 12000,
+    "silenceMs": 1500
+  },
+  "ui": {
+    "defaultAgent": "computer",
+    "speakReplies": true
+  },
+  "agents": {
+    "computer": { "enabled": true },
+    "claude-code": {
+      "enabled": "auto",
+      "command": "claude",
+      "args": ["-p", "{prompt}"],
+      "timeoutMs": 300000,
+      "cwd": ""
+    },
+    "codex": {
+      "enabled": "auto",
+      "command": "codex",
+      "args": ["exec", "{prompt}"],
+      "timeoutMs": 300000,
+      "cwd": ""
+    },
+    "deepseek": {
+      "enabled": "auto",
+      "command": "dsh",
+      "args": ["headless", "{prompt}"],
+      "timeoutMs": 900000,
+      "cwd": ""
+    },
+    "workbuddy": {
+      "enabled": "auto",
+      "command": "workbuddy",
+      "args": ["--prompt", "{prompt}"],
+      "timeoutMs": 300000,
+      "cwd": ""
+    },
+    "gemini": {
+      "enabled": "auto",
+      "command": "gemini",
+      "args": ["-p", "{prompt}"],
+      "timeoutMs": 300000,
+      "cwd": ""
+    }
+  },
+  "computer": {
+    "searchRoots": ["downloads", "documents", "desktop"],
+    "folderMap": {},
+    "maxDepth": 7,
+    "maxFiles": 25000,
+    "maxResults": 8,
+    "searchTimeoutMs": 8000,
+    "allowAbsolutePaths": false,
+    "screenshotDir": "screenshots"
+  }
+}
