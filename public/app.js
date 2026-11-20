@@ -784,8 +784,8 @@
     }
   }
 
-  function handleVoiceCommand({ text, agentId, ptt, picked }) {
-    const via = ptt || picked ? 'voice' : 'voice';
+  function handleVoiceCommand({ text, agentId }) {
+    const via = 'voice';
     const agent = agentId ? agentById(agentId) : null;
     sendCommand(text, {
       via,
@@ -956,7 +956,7 @@
 
       const pill = document.createElement('span');
       pill.className = `status-pill ${agent.enabled ? 'ready' : 'missing'}`;
-      pill.textContent = agent.enabled ? 'ready' : 'not installed';
+      pill.textContent = agent.enabled ? 'ready' : agent.kind === 'llm' ? 'no provider' : 'not installed';
 
       row.appendChild(avatar);
       row.appendChild(info);

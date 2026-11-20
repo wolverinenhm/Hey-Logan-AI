@@ -1,9 +1,12 @@
 {
   "name": "hey-ai-bridge",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "Talk to your PC and your AI agents (Claude Code, Codex, DeepSeek Harness, Workbuddy, Gemini) from your Android phone or across the room: wake words, spoken replies, real computer control.",
+  "description": "Talk to your PC and your AI agents (built-in free AI chat, Claude Code, Codex, DeepSeek Harness, Workbuddy, Gemini) from your Android phone or across the room: wake words, spoken replies, real computer control.",
   "keywords": [
+    "free-ai",
+    "ollama",
+    "pollinations",
     "voice-assistant",
     "wake-word",
     "ai-agents",
@@ -28,7 +31,7 @@
     "setup": "node scripts/setup.js",
     "icons": "node scripts/make-icons.js",
     "test": "node test/run.js",
-    "test:isolated": "node --test test/util.test.js test/router.test.js test/computer.test.js test/config.test.js test/security.test.js test/tls.test.js test/voice.test.js test/ui.test.js test/server.test.js"
+    "test:isolated": "node --test test/util.test.js test/router.test.js test/computer.test.js test/config.test.js test/security.test.js test/tls.test.js test/voice.test.js test/ui.test.js test/server.test.js test/llm.test.js"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

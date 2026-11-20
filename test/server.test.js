@@ -84,15 +84,15 @@ test('protected endpoints reject missing or wrong tokens', async () => {
   assert.equal(wrong.status, 401);
 });
 
-test('session-info lists all six agents and server urls', async () => {
+test('session-info lists all seven agents and server urls', async () => {
   const res = await fetch(`${server.base}/api/session-info`, { headers: authHeaders() });
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.equal(data.ok, true);
-  assert.equal(data.agents.length, 6);
+  assert.equal(data.agents.length, 7);
 
   const ids = data.agents.map((agent) => agent.id);
-  for (const id of ['computer', 'claude-code', 'codex', 'deepseek', 'workbuddy', 'gemini']) {
+  for (const id of ['computer', 'chat', 'claude-code', 'codex', 'deepseek', 'workbuddy', 'gemini']) {
     assert.ok(ids.includes(id), `missing agent ${id}`);
   }
 

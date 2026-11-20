@@ -2,6 +2,7 @@
 
 const { getAgentDefs, getAgentDef } = require('./defs');
 const { resolveCliCommand } = require('./cli');
+const { providerChain } = require('./llm');
 
 /**
  * Agent list for the UI: presentation data + whether each agent is actually
@@ -29,11 +30,19 @@ function describeAgents(config) {
       return { ...base, enabled: cfg.enabled !== false, executable: 'built-in', expectedCommand: 'built-in' };
     }
 
+    if (def.kind === 'llm') {
+      const chain = providerChain(config);
+      return {
+        ...base,
+        enabled: cfg.enabled !== false && chain.length > 0,
+        executable: chain.length ? `built-in · ${chain.map((p) => p.id).join(' → ')}` : null,
+        expectedCommand: 'built-in',
+        providers: chain.map((p) => p.id)
+      };
+    }
+
     const { resolved, command } = resolveCliCommand(def.id, def, config);
-    let enabled;
-    if (cfg.enabled === false) enabled = false;
-    else if (cfg.enabled === true) enabled = Boolean(resolved);
-    else enabled = Boolean(resolved);
+    const enabled = cfg.enabled !== false && Boolean(resolved);
 
     return {
       ...base,
@@ -48,6 +57,7 @@ function getAgentRuntime(agentId, config) {
   const def = getAgentDef(agentId);
   if (!def) return null;
   if (def.kind === 'computer') return { def, kind: 'computer', resolved: 'built-in' };
+  if (def.kind === 'llm') return { def, kind: 'llm', resolved: 'built-in' };
   const { resolved, command } = resolveCliCommand(agentId, def, config);
   return { def, kind: 'cli', resolved, command };
 }

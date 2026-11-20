@@ -8,7 +8,11 @@
   },
   "security": {
     "token": "XXXX-XXXX-XXXX",
-    "rateLimit": { "windowMs": 300000, "max": 12, "banMs": 600000 }
+    "rateLimit": {
+      "windowMs": 300000,
+      "max": 12,
+      "banMs": 600000
+    }
   },
   "speech": {
     "lang": "en-US",
@@ -17,53 +21,120 @@
     "autoStart": true
   },
   "wake": {
-    "phrases": ["hey logan", "hi logan", "hello logan", "okay logan", "hey logan ai"],
+    "phrases": [
+      "hey logan",
+      "hi logan",
+      "hello logan",
+      "okay logan",
+      "hey logan ai"
+    ],
     "ack": "Logan here."
   },
   "ui": {
     "defaultAgent": "computer",
-    "speakReplies": true
+    "speakReplies": true,
+    "smartRouting": true
+  },
+  "ai": {
+    "provider": "auto",
+    "order": [],
+    "timeoutMs": 60000,
+    "maxTokens": 600,
+    "historyTurns": 4,
+    "providers": {
+      "pollinations": {
+        "enabled": true
+      },
+      "ollama": {
+        "model": ""
+      },
+      "groq": {
+        "apiKey": "",
+        "model": "llama-3.3-70b-versatile"
+      },
+      "gemini": {
+        "apiKey": "",
+        "model": "gemini-2.5-flash"
+      },
+      "openrouter": {
+        "apiKey": "",
+        "model": "meta-llama/llama-3.3-70b-instruct:free"
+      },
+      "openai": {
+        "apiKey": "",
+        "model": "gpt-4.1-mini"
+      },
+      "custom": {
+        "apiKey": "",
+        "baseUrl": "",
+        "model": ""
+      }
+    }
   },
   "agents": {
-    "computer": { "enabled": true },
+    "computer": {
+      "enabled": true
+    },
+    "chat": {
+      "enabled": true
+    },
     "claude-code": {
       "enabled": "auto",
       "command": "claude",
-      "args": ["-p", "{prompt}"],
+      "args": [
+        "-p",
+        "{prompt}"
+      ],
       "timeoutMs": 300000,
       "cwd": ""
     },
     "codex": {
       "enabled": "auto",
       "command": "codex",
-      "args": ["exec", "{prompt}"],
+      "args": [
+        "exec",
+        "{prompt}"
+      ],
       "timeoutMs": 300000,
       "cwd": ""
     },
     "deepseek": {
       "enabled": "auto",
       "command": "dsh",
-      "args": ["headless", "{prompt}"],
+      "args": [
+        "headless",
+        "{prompt}"
+      ],
       "timeoutMs": 900000,
       "cwd": ""
     },
     "workbuddy": {
       "enabled": "auto",
       "command": "workbuddy",
-      "args": ["--prompt", "{prompt}"],
+      "args": [
+        "--prompt",
+        "{prompt}"
+      ],
       "timeoutMs": 300000,
       "cwd": ""
     },
     "gemini": {
       "enabled": "auto",
       "command": "gemini",
-      "args": ["-p", "{prompt}"],
+      "args": [
+        "-p",
+        "{prompt}"
+      ],
       "timeoutMs": 300000,
       "cwd": ""
     }
   },
   "computer": {
-    "searchRoots": ["downloads", "documents", "desktop"],
+    "searchRoots": [
+      "downloads",
+      "documents",
+      "desktop"
+    ],
     "folderMap": {},
     "maxDepth": 7,
     "maxFiles": 25000,

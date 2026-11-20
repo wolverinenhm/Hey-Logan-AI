@@ -17,3 +17,4 @@ require('./tls.test.js');
 require('./voice.test.js');
 require('./ui.test.js');
 require('./server.test.js');
+require('./llm.test.js');

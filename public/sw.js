@@ -1,5 +1,5 @@
 /* Service worker: cache the app shell so it opens instantly; API always network. */
-const CACHE = 'heyai-bridge-v1.1.0';
+const CACHE = 'heyai-bridge-v1.2.0';
 const ASSETS = [
   '/',
   '/index.html',

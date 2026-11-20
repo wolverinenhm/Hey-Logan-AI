@@ -6,6 +6,9 @@
  *  - UI presentation (name, icon, colour)
  *  - how to invoke the CLI (command + argv template, {prompt} placeholder)
  *
+ * Kinds: 'computer' (built-in PC control), 'llm' (built-in AI chat over HTTP,
+ * see agents/llm.js) and 'cli' (external AI command-line tools).
+ *
  * Users can override every `cli` field from data/config.json -> agents.<id>.
  */
 const AGENTS = [
@@ -20,6 +23,18 @@ const AGENTS = [
     weak: ['computer', 'pc'],
     ack: 'Computer here.',
     voice: { rate: 1.02, pitch: 1.0 }
+  },
+  {
+    id: 'chat',
+    name: 'AI Chat',
+    kind: 'llm',
+    icon: '💬',
+    color: '#f472b6',
+    description: 'Built-in AI chat: free models, no API key needed (Pollinations, local Ollama/LM Studio, or your own free/paid key)',
+    wake: ['hey chat', 'hey chatbot', 'hey ai chat', 'hey gpt', 'hey free ai'],
+    weak: ['chatbot', 'chat'],
+    ack: 'Chat here.',
+    voice: { rate: 1.02, pitch: 1.05 }
   },
   {
     id: 'claude-code',
