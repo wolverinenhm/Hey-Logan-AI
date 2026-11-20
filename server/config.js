@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { randomToken, deepMerge } = require('./util');
+const { DEFAULT_WAKE, DEFAULT_WAKE_ACK } = require('./agents/defs');
 
 const APP_ROOT = path.resolve(__dirname, '..');
 const PKG = require(path.join(APP_ROOT, 'package.json'));
@@ -32,7 +33,7 @@ function toPort(value, fallback) {
 function defaultConfig() {
   return {
     app: {
-      name: 'Hey AI Bridge',
+      name: 'Hey Logan AI',
       version: PKG.version
     },
     server: {
@@ -49,7 +50,14 @@ function defaultConfig() {
     speech: {
       lang: 'en-US',
       wakeWindowMs: 12000,
-      silenceMs: 1500
+      silenceMs: 1500,
+      // Start listening for the wake word as soon as the app opens.
+      autoStart: true
+    },
+    // The assistant's own wake word. Override in data/config.json.
+    wake: {
+      phrases: DEFAULT_WAKE.slice(),
+      ack: DEFAULT_WAKE_ACK
     },
     ui: {
       defaultAgent: 'computer',

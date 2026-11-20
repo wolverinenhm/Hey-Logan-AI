@@ -71,3 +71,31 @@ test('removeWakePhrase removes only the wake words', () => {
   const remainder = voice._test.removeWakePhrase('hey computer please open downloads', 'hey computer');
   assert.equal(remainder.trim(), 'please open downloads');
 });
+
+/* ---------------- the assistant's own wake word ("Hey Logan") ---------------- */
+
+const DEFAULT_WAKE = ['hey logan', 'hi logan', 'okay logan'];
+
+test('the assistant wake word matches without an agent', () => {
+  const result = voice._test.simulateWake('Hey Logan', AGENTS, GENERIC, DEFAULT_WAKE);
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.agentId, null);
+  assert.equal(result.generic, false);
+  assert.equal(result.remainder, '');
+});
+
+test('a command spoken after "Hey Logan" becomes the remainder', () => {
+  const result = voice._test.simulateWake('hey logan find my budget pdf in downloads', AGENTS, GENERIC, DEFAULT_WAKE);
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.remainder, 'find my budget pdf in downloads');
+});
+
+test('an explicit agent wake still wins over the assistant wake', () => {
+  const result = voice._test.simulateWake('hey claude code summarise the repo', AGENTS, GENERIC, DEFAULT_WAKE);
+  assert.equal(result.agentId, 'claude-code');
+  assert.equal(result.defaultWake, false);
+});
+
+test('the assistant wake word does not match without it being configured', () => {
+  assert.equal(voice._test.simulateWake('hey logan', AGENTS, GENERIC), null);
+});

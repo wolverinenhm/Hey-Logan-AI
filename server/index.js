@@ -16,7 +16,7 @@ const { parseCommand } = require('./router');
 const { describeAgents } = require('./agents/registry');
 const { runCliAgent } = require('./agents/cli');
 const { handleComputerCommand } = require('./agents/computer');
-const { getAgentDef, GENERIC_WAKE } = require('./agents/defs');
+const { getAgentDef, GENERIC_WAKE, DEFAULT_WAKE, DEFAULT_WAKE_ACK } = require('./agents/defs');
 const { ensureCertificate } = require('./tls');
 const { normalizeText, resolveStatic, truncate, getLanAddresses, randId } = require('./util');
 
@@ -178,6 +178,10 @@ function publicSessionInfo(state) {
     ui: state.config.ui,
     agents: describeAgents(state.config),
     genericWake: GENERIC_WAKE,
+    wake: {
+      phrases: (state.config.wake && state.config.wake.phrases) || DEFAULT_WAKE,
+      ack: (state.config.wake && state.config.wake.ack) || DEFAULT_WAKE_ACK
+    },
     sessions: state.sessions.size
   };
 }
@@ -245,7 +249,7 @@ async function handleApi(state, req, res, url) {
   if (pathname === '/api/health' && method === 'GET') {
     return sendJson(res, 200, {
       ok: true,
-      app: 'Hey AI Bridge',
+      app: 'Hey Logan AI',
       version: PKG.version,
       time: new Date().toISOString(),
       requiresToken: true
@@ -257,7 +261,15 @@ async function handleApi(state, req, res, url) {
   }
 
   if (pathname === '/api/agents' && method === 'GET') {
-    return sendJson(res, 200, { ok: true, agents: describeAgents(state.config), genericWake: GENERIC_WAKE });
+    return sendJson(res, 200, {
+      ok: true,
+      agents: describeAgents(state.config),
+      genericWake: GENERIC_WAKE,
+      wake: {
+        phrases: (state.config.wake && state.config.wake.phrases) || DEFAULT_WAKE,
+        ack: (state.config.wake && state.config.wake.ack) || DEFAULT_WAKE_ACK
+      }
+    });
   }
 
   if (pathname === '/api/pairing' && method === 'GET') {
@@ -359,7 +371,9 @@ async function executeCommand(state, input) {
   const startedAt = Date.now();
 
   const routing = parseCommand(text, {
-    defaultAgent: (config.ui && config.ui.defaultAgent) || 'computer'
+    defaultAgent: (config.ui && config.ui.defaultAgent) || 'computer',
+    defaultWake: (config.wake && config.wake.phrases) || DEFAULT_WAKE,
+    wakeAck: (config.wake && config.wake.ack) || DEFAULT_WAKE_ACK
   });
 
   if (routing.generic) {
@@ -382,7 +396,9 @@ async function executeCommand(state, input) {
 
   if (routing.needsTask) {
     const def = getAgentDef(routing.agentId);
-    const speech = `${def ? def.name : 'I'} here. What would you like me to do?`;
+    const speech = routing.defaultWake
+      ? `${routing.ack || DEFAULT_WAKE_ACK} What would you like me to do?`
+      : `${def ? def.name : 'I'} here. What would you like me to do?`;
     state.hub.publish({
       type: 'agent:result',
       clientId,
@@ -428,6 +444,7 @@ async function executeCommand(state, input) {
     routing: {
       matched: routing.matched,
       generic: false,
+      defaultWake: Boolean(routing.defaultWake),
       newSession: routing.newSession,
       wakePhrase: routing.wakePhrase,
       task: taskText

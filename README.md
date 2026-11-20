@@ -1,4 +1,4 @@
-# Hey AI Bridge
+# Hey Logan AI
 
 **Talk to your PC and your AI agents from anywhere in your home — including from your Android phone.**
 
@@ -7,7 +7,7 @@ Say **“Hey Claude Code, open a new session and find my budget Word document in
 ```
   ┌───────────────────────────────┐          ┌──────────────────────────────────┐
   │  Android phone / PC browser   │  HTTPS   │  Your PC — Node.js server        │
-  │  Hey AI Bridge PWA            │ ───────▶ │  • wake-word routing             │
+  │  Hey Logan AI PWA            │ ───────▶ │  • wake-word routing             │
   │  • wake words, speech-to-text │  + SSE   │  • token auth + rate limiting    │
   │  • spoken replies (TTS)       │ ◀─────── │  • Computer agent (files, apps)  │
   │  • command history            │          │  • CLI adapters: Claude Code,    │
@@ -43,7 +43,7 @@ No cloud backend, no account, no subscription. The bridge runs on your machine, 
 
 ## What it does
 
-Hey AI Bridge is a **voice command center for your computer and your AI agents**.
+Hey Logan AI is a **voice command center for your computer and your AI agents**.
 
 1. You open the app on your phone (or a browser tab on the PC) and tap **Start listening**.
 2. You say a **wake phrase** — `Hey Computer`, `Hey Claude Code`, `Hey Codex`, `Hey DeepSeek`, `Hey Workbuddy`, `Hey Gemini` (or `Hey AI` if you don’t care which one).
@@ -67,7 +67,8 @@ Example from real life:
 
 | Feature | Details |
 |---|---|
-| 🎙 Wake-word voice control | “Hey Claude Code”, “Hey Computer”, “Hey Codex”, “Hey DeepSeek”, “Hey Workbuddy”, “Hey Gemini”, generic “Hey AI” |
+| 🎙 Wake-word voice control | **“Hey Logan”** (the assistant itself) plus “Hey Claude Code”, “Hey Computer”, “Hey Codex”, “Hey DeepSeek”, “Hey Workbuddy”, “Hey Gemini” and generic “Hey AI” |
+| 🙋 Always-on listening | Hands-free by default: the app starts listening as soon as it opens — call **“Hey Logan”** and talk, no button to press (Settings → Voice → *Always listen*). The Windows launcher starts it at login and pre-grants the microphone. |
 | 🗣 Spoken replies | Browser TTS with per-agent voice pitch/rate; acknowledgement when you call, result summary when done |
 | 💬 Conversation follow-ups | After a reply, you can say “open it” for 20 s without repeating the wake word (optional) |
 | 🖥 Computer agent | Find files by name/type/folder, open files & folders, launch apps, list folders, screenshot, lock screen, PC stats |
@@ -150,11 +151,13 @@ npm start
 
 ### Voice
 
-- Tap **Start listening** once. The orb pulses while it listens for wake words.
+- **Just call “Hey Logan”.** The app starts listening by itself when it opens — there is no button to press. It answers out loud (*“Logan here.”*) and then takes your command.
 - Say a wake phrase, wait for the short acknowledgement, then speak your command.
-- You can also speak **wake word + command in one breath** — *“Hey Computer, find my tax PDF in Downloads”* — and the task starts immediately while the acknowledgement is spoken.
+- You can also speak **wake word + command in one breath** — *“Hey Logan, find my tax PDF in Downloads”* or *“Hey Computer, find my tax PDF in Downloads”* — and the task starts immediately while the acknowledgement is spoken.
+- With **“Hey Logan”** the assistant decides where the command goes: name an agent in the sentence (*“Hey Logan, ask Claude Code to summarise the repo”*) and it goes there, otherwise the default agent (`ui.defaultAgent`, default `computer`) handles it.
 - The bridge shows what it heard and shows/streams the agent’s answer; the reply is spoken on the device you spoke into.
-- Say **“Stop listening”** (tap the orb again) to pause. Tap **Hold to talk** to speak a one-off command without a wake word.
+- Settings → Voice → **Always listen for “Hey Logan”** turns hands-free listening on/off. It is on by default; the choice is remembered on this device. Tap **Stop listening** to pause for the session, or **Hold to talk** for a one-off command without a wake word.
+- If the microphone is blocked, allow it once in the browser address bar (microphone icon) — after that it stays hands-free.
 
 ### Typing
 
@@ -178,6 +181,7 @@ Settings → Recent sessions lists the last conversations on the PC (in memory).
 
 | Agent | Wake phrases you can say | Weak form |
 |---|---|---|
+| **Hey Logan** (the assistant) | “Hey Logan”, “Hi Logan”, “Hello Logan”, “Okay Logan”, “Hey Logan AI” → answers *“Logan here.”*, then routes your command (an agent named inside it still wins) | — (use an agent wake to address one directly) |
 | **Computer** | “Hey Computer”, “Hey PC”, “Hey Laptop”, “Hey Machine”, “Hey this computer” | “Computer …” / “PC …” at the start of a command |
 | **Claude Code** | “Hey Claude Code”, “Hey Claude”, “Hey Claud”, “Hey cloud code” | “Claude Code …” / “Claude …” |
 | **Codex** | “Hey Codex”, “Hey Code X”, “Hey Codecs” | “Codex …” |
@@ -278,7 +282,12 @@ The live config lives at **`data/config.json`** (created on first run; keep it o
   "speech": {
     "lang": "en-US",             // recognition language default (UI can override)
     "wakeWindowMs": 12000,       // how long to wait for a command after a wake word
-    "silenceMs": 1500            // pause that ends the command
+    "silenceMs": 1500,           // pause that ends the command
+    "autoStart": true            // start hands-free listening when the app opens
+  },
+  "wake": {
+    "phrases": ["hey logan", "hi logan", "hello logan", "okay logan", "hey logan ai"],
+    "ack": "Logan here."         // spoken acknowledgement for the assistant wake word
   },
   "ui": {
     "defaultAgent": "computer",  // used when no wake word is spoken

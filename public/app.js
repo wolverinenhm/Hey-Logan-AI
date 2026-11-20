@@ -1,5 +1,5 @@
 /* ============================================================
-   Hey AI Bridge — UI controller
+   Hey Logan AI — UI controller
    Talks to the local bridge over REST + Server-Sent Events and
    wires browser speech recognition / TTS to the agent router.
    ============================================================ */
@@ -52,6 +52,8 @@
     info: null,
     agents: [],
     genericWake: [],
+    defaultWake: [],
+    wakeAck: 'Logan here.',
     engine: null,
     sse: null,
     connected: false,
@@ -66,6 +68,7 @@
       lang: store.get('lang', 'en-US'),
       tts: store.get('tts', true),
       followUps: store.get('followUps', true),
+      autoListen: store.get('autoListen', true),
       rate: store.get('rate', 1.0),
       voiceURI: store.get('voiceURI', '')
     },
@@ -84,7 +87,7 @@
       'listenBtn', 'pttBtn', 'micWarning', 'agentStrip', 'agentsHint', 'transcript', 'emptyState',
       'textForm', 'textInput', 'clearBtn', 'settingsDialog', 'closeSettingsBtn', 'serverInput',
       'tokenInput', 'saveTokenBtn', 'pairNote', 'qrImg', 'copyPairBtn', 'pairUrls', 'langSelect',
-      'voiceSelect', 'ttsToggle', 'followToggle', 'rateInput', 'rateVal', 'testVoiceBtn',
+      'voiceSelect', 'autoListenToggle', 'ttsToggle', 'followToggle', 'rateInput', 'rateVal', 'testVoiceBtn',
       'agentStatusList', 'sessionList', 'versionLabel', 'toastStack'
     ];
     for (const id of ids) el[id] = $(id);
@@ -172,6 +175,8 @@
       state.info = info;
       state.agents = info.agents || [];
       state.genericWake = info.genericWake || [];
+      state.defaultWake = (info.wake && info.wake.phrases) || [];
+      state.wakeAck = (info.wake && info.wake.ack) || 'Logan here.';
       applyServerSpeechDefaults(info);
       renderAgents();
       renderAgentStatus();
@@ -180,7 +185,8 @@
       connectSSE();
       setConnection(true);
       loadSessions();
-      setStatus('idle', 'Tap the orb or say a wake word');
+      setStatus('idle', 'Say \u201CHey Logan\u201D to wake me up');
+      autoStartListening();
     } catch (err) {
       if (err.status === 401) {
         showTokenNeeded();
@@ -237,7 +243,7 @@
     state.connected = ok;
     if (ok) {
       const ready = state.agents.filter((agent) => agent.enabled).length;
-      el.connLabel.textContent = `${state.info?.app?.name || 'Hey AI Bridge'} · ${ready}/${state.agents.length || '?'} agents ready`;
+      el.connLabel.textContent = `${state.info?.app?.name || 'Hey Logan AI'} · ${ready}/${state.agents.length || '?'} agents ready`;
       if (el.orb.dataset.state === 'error') setStatus('idle', 'Ready');
     } else {
       el.connLabel.textContent = 'connection lost — retrying…';
@@ -585,6 +591,7 @@
       lang: state.settings.lang,
       agents: state.agents,
       genericWake: state.genericWake,
+      defaultWake: state.defaultWake,
       silenceMs: speechCfg.silenceMs || 1500,
       wakeWindowMs: speechCfg.wakeWindowMs || 12000,
       onStateChange: handleVoiceState,
@@ -659,8 +666,78 @@
     }
   }
 
-  function handleWake({ agentId, agent, generic, remainder }) {
+  function defaultAgentDef() {
+    const id = state.info && state.info.ui && state.info.ui.defaultAgent;
+    return id ? agentById(id) : null;
+  }
+
+  /* ---------------- hands-free auto-start ---------------- */
+
+  // Start listening for "Hey Logan" as soon as the app opens. The microphone
+  // permission is requested by SpeechRecognition itself; once it is granted
+  // (the Windows launcher pre-grants it) there is no button to press.
+  function autoStartListening() {
+    if (!state.engine || !state.engine.supported) return;
+    if (!window.isSecureContext) return;
+    if (!state.settings.autoListen) return;
+    if (state.engine.isHandsFree()) return;
+    if (state.autoStartTried) return;
+    state.autoStartTried = true;
+
+    const start = () => {
+      try {
+        state.engine.startHandsFree();
+        setStatus('listening', 'Listening for \u201CHey Logan\u201D\u2026');
+      } catch (err) {
+        toast('Could not start listening: ' + (err && err.message ? err.message : 'unknown error'), 'error');
+      }
+    };
+
+    if (navigator.permissions && typeof navigator.permissions.query === 'function') {
+      navigator.permissions
+        .query({ name: 'microphone' })
+        .then((status) => {
+          if (status.state === 'denied') {
+            state.settings.autoListen = false;
+            setStatus('idle', 'Microphone blocked - allow it, then tap Start listening');
+            showMicWarning('Microphone access is blocked for this site. Allow it in the browser address bar, then reload.');
+            return;
+          }
+          start();
+        })
+        .catch(start);
+    } else {
+      start();
+    }
+  }
+
+  function handleWake({ agentId, agent, generic, defaultWake, remainder }) {
     window.HeyAIVoice?.chime('wake');
+
+    if (defaultWake) {
+      // "Hey Logan": answer out loud, then route whatever is said next by its
+      // content. A named agent in the sentence still wins; otherwise the
+      // configured default agent handles the command.
+      const ack = state.wakeAck || 'Logan here.';
+      const spoken = String(remainder || '').trim();
+      setStatus('awake', spoken ? 'On it\u2026' : 'Listening for your command\u2026');
+      if (spoken) {
+        if (state.settings.tts && state.engine) state.engine.speak(ack, voiceSettingsFor(defaultAgentDef()));
+        sendCommand(spoken, { via: 'voice' });
+        return;
+      }
+      if (state.settings.tts && state.engine) {
+        state.engine.speak(ack, {
+          ...voiceSettingsFor(defaultAgentDef()),
+          onend: () => {
+            if (state.engine) state.engine.beginCapture(null);
+          }
+        });
+      } else if (state.engine) {
+        state.engine.beginCapture(null);
+      }
+      return;
+    }
     if (generic) {
       setStatus('awake', 'Which agent?');
       if (state.settings.tts && state.engine) {
@@ -901,6 +978,7 @@
       }
       el.langSelect.value = state.settings.lang;
     }
+    if (el.autoListenToggle) el.autoListenToggle.checked = Boolean(state.settings.autoListen);
     if (el.ttsToggle) el.ttsToggle.checked = state.settings.tts;
     if (el.followToggle) el.followToggle.checked = state.settings.followUps;
     if (el.rateInput) el.rateInput.value = state.settings.rate;
@@ -959,6 +1037,22 @@
       });
     }
 
+    if (el.autoListenToggle) {
+      el.autoListenToggle.addEventListener('change', () => {
+        state.settings.autoListen = el.autoListenToggle.checked;
+        store.set('autoListen', state.settings.autoListen);
+        store.set('autoListenSet', true);
+        if (!state.engine) return;
+        if (state.settings.autoListen) {
+          state.autoStartTried = false;
+          state.engine.startHandsFree();
+          setStatus('listening', 'Listening for \u201CHey Logan\u201D\u2026');
+        } else {
+          state.engine.stopHandsFree();
+          setStatus('idle', 'Hands-free listening off');
+        }
+      });
+    }
     if (el.listenBtn) el.listenBtn.addEventListener('click', toggleListening);
     if (el.orb) el.orb.addEventListener('click', toggleListening);
 
@@ -1059,7 +1153,7 @@
           toast('Speech synthesis is unavailable in this browser.', 'error');
           return;
         }
-        state.engine.speak('Hi, this is your Hey AI bridge. Wake me by saying, hey computer.', {
+        state.engine.speak('Hi, this is your Hey Logan AI. Wake me by saying, hey computer.', {
           ...voiceSettingsFor(null)
         });
       });
@@ -1121,12 +1215,20 @@
       return;
     }
     if (state.engine.isHandsFree()) {
+      state.settings.autoListen = false;
+      store.set('autoListen', false);
+      store.set('autoListenSet', true);
+      if (el.autoListenToggle) el.autoListenToggle.checked = false;
       state.engine.stopHandsFree();
       setStatus('idle', 'Listening stopped');
       toast('Stopped listening. Tap again to resume.', 'info');
     } else {
+      state.settings.autoListen = true;
+      store.set('autoListen', true);
+      store.set('autoListenSet', true);
+      if (el.autoListenToggle) el.autoListenToggle.checked = true;
       state.engine.startHandsFree();
-      setStatus('listening', 'Listening for wake words…');
+      setStatus('listening', 'Listening for \u201CHey Logan\u201D\u2026');
     }
   }
 

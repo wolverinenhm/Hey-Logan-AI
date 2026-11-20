@@ -1,6 +1,6 @@
 # Android setup — step by step
 
-This guide sets up the **Hey AI Bridge** PWA on an Android phone so you can call your AI agents from anywhere in the house.
+This guide sets up the **Hey Logan AI** PWA on an Android phone so you can call your AI agents from anywhere in the house.
 
 ## 1. Before you start
 

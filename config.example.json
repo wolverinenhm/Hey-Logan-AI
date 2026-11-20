@@ -13,7 +13,12 @@
   "speech": {
     "lang": "en-US",
     "wakeWindowMs": 12000,
-    "silenceMs": 1500
+    "silenceMs": 1500,
+    "autoStart": true
+  },
+  "wake": {
+    "phrases": ["hey logan", "hi logan", "hello logan", "okay logan", "hey logan ai"],
+    "ack": "Logan here."
   },
   "ui": {
     "defaultAgent": "computer",

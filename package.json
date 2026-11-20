@@ -1,6 +1,6 @@
 {
   "name": "hey-ai-bridge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Talk to your PC and your AI agents (Claude Code, Codex, DeepSeek Harness, Workbuddy, Gemini) from your Android phone or across the room: wake words, spoken replies, real computer control.",
   "keywords": [

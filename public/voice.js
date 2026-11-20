@@ -1,5 +1,5 @@
 /* ============================================================
-   Hey AI Bridge — voice engine
+   Hey Logan AI — voice engine
    Wake-word detection + command capture + TTS + push-to-talk.
    Uses the browser's Web Speech API (Chrome / Edge / Android Chrome).
    ============================================================ */
@@ -48,7 +48,7 @@
   }
 
   /** Pick the best wake phrase match for a normalized transcript. */
-  function matchWakeWith(norm, agents, genericWake) {
+  function matchWakeWith(norm, agents, genericWake, defaultWake) {
     const matches = [];
     for (const agent of agents || []) {
       if (!agent) continue;
@@ -63,6 +63,12 @@
         if (p && (norm === p || norm.startsWith(`${p} `))) {
           matches.push({ agentId: agent.id, agent, phrase: p, strong: false, len: p.length });
         }
+      }
+    }
+    for (const phrase of defaultWake || []) {
+      const p = normalize(phrase);
+      if (p && hasPhrase(norm, p)) {
+        matches.push({ agentId: null, agent: null, phrase: p, strong: true, len: p.length, defaultWake: true });
       }
     }
     for (const phrase of genericWake || []) {
@@ -80,9 +86,9 @@
    * `remainder` carries a command spoken in the same breath as the wake word
    * (e.g. "hey computer find my budget file" -> "find my budget file").
    */
-  function simulateWake(transcript, agents, genericWake) {
+  function simulateWake(transcript, agents, genericWake, defaultWake) {
     const norm = normalize(transcript);
-    const match = matchWakeWith(norm, agents, genericWake);
+    const match = matchWakeWith(norm, agents, genericWake, defaultWake);
     if (!match) return null;
     const remainder = match.generic ? '' : cleanRemainder(removeWakePhrase(transcript, match.phrase));
     return {
@@ -90,6 +96,7 @@
       agent: match.agent,
       phrase: match.phrase,
       generic: Boolean(match.generic),
+      defaultWake: Boolean(match.defaultWake),
       transcript: norm,
       remainder
     };
@@ -100,6 +107,7 @@
       lang: options.lang || 'en-US',
       agents: options.agents || [],
       genericWake: options.genericWake || [],
+      defaultWake: options.defaultWake || [],
       silenceMs: options.silenceMs || 1500,
       wakeWindowMs: options.wakeWindowMs || 12000,
       onStateChange: options.onStateChange || (() => {}),
@@ -115,6 +123,7 @@
       lang: opts.lang,
       agents: opts.agents,
       genericWake: opts.genericWake,
+      defaultWake: opts.defaultWake,
       supported: Boolean(SR),
       handsFree: false,
       mode: 'idle', // idle | wake | capture | once | ptt
@@ -281,7 +290,7 @@
     /* ---------------- wake matching ---------------- */
 
     function matchWake(norm) {
-      return matchWakeWith(norm, engine.agents, engine.genericWake);
+      return matchWakeWith(norm, engine.agents, engine.genericWake, engine.defaultWake);
     }
 
     /* ---------------- state helpers ---------------- */
@@ -448,6 +457,7 @@
           agent: match.agent,
           phrase: match.phrase,
           generic: Boolean(match.generic),
+          defaultWake: Boolean(match.defaultWake),
           transcript: norm,
           remainder
         });
@@ -813,9 +823,10 @@
       return String(lang || 'en-US');
     }
 
-    function setAgents(agents, genericWake) {
+    function setAgents(agents, genericWake, defaultWake) {
       engine.agents = agents || [];
       engine.genericWake = genericWake || [];
+      if (Array.isArray(defaultWake)) engine.defaultWake = defaultWake;
     }
 
     const api = {

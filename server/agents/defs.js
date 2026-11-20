@@ -120,6 +120,14 @@ const AGENTS = [
 
 const GENERIC_WAKE = ['hey ai', 'hey assistant', 'hey agents', 'hey anybody', 'hey bridge'];
 
+/**
+ * The assistant's own wake word ("Hey Logan"). Unlike an agent wake phrase this
+ * does not pick a CLI agent: the assistant answers, then the spoken command is
+ * routed by its content (or to ui.defaultAgent when no agent is named).
+ */
+const DEFAULT_WAKE = ['hey logan', 'hi logan', 'hello logan', 'okay logan', 'hey logan ai'];
+const DEFAULT_WAKE_ACK = 'Logan here.';
+
 function getAgentDef(id) {
   return AGENTS.find((agent) => agent.id === id) || null;
 }
@@ -128,4 +136,4 @@ function getAgentDefs() {
   return AGENTS;
 }
 
-module.exports = { AGENTS, GENERIC_WAKE, getAgentDef, getAgentDefs };
+module.exports = { AGENTS, GENERIC_WAKE, DEFAULT_WAKE, DEFAULT_WAKE_ACK, getAgentDef, getAgentDefs };
