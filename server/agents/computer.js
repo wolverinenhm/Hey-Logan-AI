@@ -275,13 +275,33 @@ function detectVerb(norm) {
   }
   if (/^(?:list|show)\b/.test(norm)) return 'list';
   if (/\b(?:list|show|what's in|contents of)\b.*\b(?:folder|directory|downloads|desktop|documents)\b/.test(norm)) return 'list';
-  return 'find';
+  return null;
+}
+
+const QUESTION_START =
+  /^(?:what|what's|whats|who|who's|whom|whose|why|how|when|which|is|are|was|were|am|can|could|should|would|will|do|does|did|have|has|explain|tell|write|translate|summari[sz]e|define|describe|calculate|compute|compose|draft|suggest|recommend|give|teach|convert|compare|brainstorm|plan|help\s+me|i\s+(?:need|want|wonder)|tell\s+me|let\s+me\s+know)\b/;
+
+/**
+ * Smart routing helper: true when a command clearly targets the PC (a verb the
+ * Computer agent understands, a known folder or a file type), false when it
+ * reads like a general question or writing request that an AI model should
+ * answer ("what is the capital of France", "write a haiku about rain").
+ */
+function looksLikeComputerTask(task) {
+  const raw = String(task == null ? '' : task).trim();
+  const norm = normalizeText(raw);
+  if (!norm) return true;
+  if (detectVerb(norm)) return true;
+  if (detectFolder(norm) || detectType(norm)) return true;
+  if (/\b(?:file|files|folder|folders|document|documents|my pc|my computer|this pc|screenshot)\b/.test(norm)) return true;
+  if (QUESTION_START.test(norm) || /\?\s*$/.test(raw)) return false;
+  return true;
 }
 
 function parseIntent(task) {
   const raw = String(task == null ? '' : task).trim();
   const norm = normalizeText(raw);
-  const intent = detectVerb(norm);
+  const intent = detectVerb(norm) || 'find';
   const folderKey = detectFolder(norm);
   const type = detectType(norm);
   const query = extractQuery(norm, { folderKey, type });
@@ -922,6 +942,7 @@ async function handleComputerCommand(ctx, task) {
 
 module.exports = {
   handleComputerCommand,
+  looksLikeComputerTask,
   _internals: {
     parseIntent,
     detectVerb,

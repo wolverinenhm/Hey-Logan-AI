@@ -95,3 +95,63 @@ test('empty input yields a needsTask result on the fallback agent', () => {
   assert.equal(result.agentId, 'computer');
   assert.equal(result.needsTask, true);
 });
+
+/* ---------------- the assistant's own wake word ("Hey Logan") ---------------- */
+
+test('"Hey Logan" alone wakes the assistant and asks what to do', () => {
+  const result = parseCommand('Hey Logan');
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.matched, true);
+  assert.equal(result.generic, false);
+  assert.equal(result.agentId, null);
+  assert.equal(result.needsTask, true);
+  assert.equal(result.ack, 'Logan here.');
+});
+
+test('"Hey Logan" plus a command keeps the command for the default agent', () => {
+  const result = parseCommand('Hey Logan, find my budget PDF in Downloads');
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.needsTask, false);
+  assert.equal(result.agentId, null);
+  assert.match(result.task, /^find my budget PDF in Downloads$/i);
+});
+
+test('"Hey Logan, ask Claude Code to …" still routes to Claude Code', () => {
+  const result = parseCommand('hey logan ask claude code to summarise the repo');
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.agentId, 'claude-code');
+  assert.equal(result.task, 'summarise the repo');
+});
+
+test('a custom wake phrase list is honoured', () => {
+  const result = parseCommand('hey jarvis open downloads', { defaultWake: ['hey jarvis'] });
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.task, 'open downloads');
+});
+
+test('"hey logan" does not hijack an explicit agent wake', () => {
+  const result = parseCommand('hey claude code fix the failing test');
+  assert.equal(result.agentId, 'claude-code');
+  assert.equal(result.defaultWake, undefined);
+});
+test('client-remainder text still routes to a named agent (spoken "Hey Logan, ask X")', () => {
+  const claude = parseCommand('ask claude code to summarise the repo');
+  assert.equal(claude.agentId, 'claude-code');
+  assert.equal(claude.task, 'summarise the repo');
+
+  const deepseek = parseCommand('tell deepseek to write unit tests');
+  assert.equal(deepseek.agentId, 'deepseek');
+  assert.equal(deepseek.task, 'write unit tests');
+});
+
+test('"Hey Logan AI" is stripped as one phrase', () => {
+  const result = parseCommand('hey logan ai open downloads');
+  assert.equal(result.defaultWake, true);
+  assert.equal(result.task, 'open downloads');
+});
+
+test('typed bare agent names still route without a wake word', () => {
+  const result = parseCommand('computer, open downloads');
+  assert.equal(result.agentId, 'computer');
+  assert.equal(result.task, 'open downloads');
+});

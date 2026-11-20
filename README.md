@@ -1,4 +1,4 @@
-# Hey AI Bridge
+# Hey Logan AI
 
 **Talk to your PC and your AI agents from anywhere in your home — including from your Android phone.**
 
@@ -7,16 +7,20 @@ Say **“Hey Claude Code, open a new session and find my budget Word document in
 ```
   ┌───────────────────────────────┐          ┌──────────────────────────────────┐
   │  Android phone / PC browser   │  HTTPS   │  Your PC — Node.js server        │
-  │  Hey AI Bridge PWA            │ ───────▶ │  • wake-word routing             │
+  │  Hey Logan AI PWA            │ ───────▶ │  • wake-word routing             │
   │  • wake words, speech-to-text │  + SSE   │  • token auth + rate limiting    │
   │  • spoken replies (TTS)       │ ◀─────── │  • Computer agent (files, apps)  │
-  │  • command history            │          │  • CLI adapters: Claude Code,    │
-  └───────────────────────────────┘          │    Codex, DeepSeek, Workbuddy,   │
+  │  • command history            │          │  • AI Chat: free built-in models │
+  └───────────────────────────────┘          │    (no API key needed)           │
+                                             │  • CLI adapters: Claude Code,    │
+                                             │    Codex, DeepSeek, Workbuddy,   │
                                              │    Gemini                        │
                                              └──────────────────────────────────┘
 ```
 
 No cloud backend, no account, no subscription. The bridge runs on your machine, on your local network, behind a private access token.
+
+**New in 1.2.0:** a built-in **AI Chat** agent that works out of the box with **free, open AI models and no API key** — ask *“Hey Logan, what’s the capital of France?”* and it answers. See [Built-in free AI](#built-in-free-ai-no-api-key).
 
 ---
 
@@ -43,7 +47,7 @@ No cloud backend, no account, no subscription. The bridge runs on your machine, 
 
 ## What it does
 
-Hey AI Bridge is a **voice command center for your computer and your AI agents**.
+Hey Logan AI is a **voice command center for your computer and your AI agents**.
 
 1. You open the app on your phone (or a browser tab on the PC) and tap **Start listening**.
 2. You say a **wake phrase** — `Hey Computer`, `Hey Claude Code`, `Hey Codex`, `Hey DeepSeek`, `Hey Workbuddy`, `Hey Gemini` (or `Hey AI` if you don’t care which one).
@@ -67,10 +71,13 @@ Example from real life:
 
 | Feature | Details |
 |---|---|
-| 🎙 Wake-word voice control | “Hey Claude Code”, “Hey Computer”, “Hey Codex”, “Hey DeepSeek”, “Hey Workbuddy”, “Hey Gemini”, generic “Hey AI” |
+| 🎙 Wake-word voice control | **“Hey Logan”** (the assistant itself) plus “Hey Claude Code”, “Hey Computer”, “Hey Codex”, “Hey DeepSeek”, “Hey Workbuddy”, “Hey Gemini” and generic “Hey AI” |
+| 🙋 Always-on listening | Hands-free by default: the app starts listening as soon as it opens — call **“Hey Logan”** and talk, no button to press (Settings → Voice → *Always listen*). The Windows launcher starts it at login and pre-grants the microphone. |
 | 🗣 Spoken replies | Browser TTS with per-agent voice pitch/rate; acknowledgement when you call, result summary when done |
 | 💬 Conversation follow-ups | After a reply, you can say “open it” for 20 s without repeating the wake word (optional) |
 | 🖥 Computer agent | Find files by name/type/folder, open files & folders, launch apps, list folders, screenshot, lock screen, PC stats |
+| 💬 Built-in AI Chat | Free models with **no API key**: Pollinations.AI (public, keyless), or open-source models on your own PC via Ollama / LM Studio. Optional free-tier keys (Groq, Gemini, OpenRouter, Cerebras, Mistral) or paid keys (OpenAI, DeepSeek, any OpenAI-compatible API). Automatic fallback between providers. |
+| 🧭 Smart routing | “Hey Logan” + a general question goes to AI Chat; file/app/PC commands still go to the Computer agent |
 | 🤖 AI CLI adapters | Claude Code, OpenAI Codex, DeepSeek Harness (`dsh headless`), Workbuddy (configurable), Gemini CLI |
 | 📱 Installable PWA | Add to Android home screen; full-screen, offline app shell, QR pairing |
 | 🔔 Real-time streaming | CLI output streams line-by-line over Server-Sent Events |
@@ -150,11 +157,13 @@ npm start
 
 ### Voice
 
-- Tap **Start listening** once. The orb pulses while it listens for wake words.
+- **Just call “Hey Logan”.** The app starts listening by itself when it opens — there is no button to press. It answers out loud (*“Logan here.”*) and then takes your command.
 - Say a wake phrase, wait for the short acknowledgement, then speak your command.
-- You can also speak **wake word + command in one breath** — *“Hey Computer, find my tax PDF in Downloads”* — and the task starts immediately while the acknowledgement is spoken.
+- You can also speak **wake word + command in one breath** — *“Hey Logan, find my tax PDF in Downloads”* or *“Hey Computer, find my tax PDF in Downloads”* — and the task starts immediately while the acknowledgement is spoken.
+- With **“Hey Logan”** the assistant decides where the command goes: name an agent in the sentence (*“Hey Logan, ask Claude Code to summarise the repo”*) and it goes there, otherwise the default agent (`ui.defaultAgent`, default `computer`) handles it.
 - The bridge shows what it heard and shows/streams the agent’s answer; the reply is spoken on the device you spoke into.
-- Say **“Stop listening”** (tap the orb again) to pause. Tap **Hold to talk** to speak a one-off command without a wake word.
+- Settings → Voice → **Always listen for “Hey Logan”** turns hands-free listening on/off. It is on by default; the choice is remembered on this device. Tap **Stop listening** to pause for the session, or **Hold to talk** for a one-off command without a wake word.
+- If the microphone is blocked, allow it once in the browser address bar (microphone icon) — after that it stays hands-free.
 
 ### Typing
 
@@ -178,6 +187,8 @@ Settings → Recent sessions lists the last conversations on the PC (in memory).
 
 | Agent | Wake phrases you can say | Weak form |
 |---|---|---|
+| **Hey Logan** (the assistant) | “Hey Logan”, “Hi Logan”, “Hello Logan”, “Okay Logan”, “Hey Logan AI” → answers *“Logan here.”*, then routes your command (an agent named inside it still wins) | — (use an agent wake to address one directly) |
+| **AI Chat** | “Hey Chat”, “Hey Chatbot”, “Hey AI Chat”, “Hey GPT”, “Hey Free AI” — or just ask “Hey Logan” a question | “Chat …” / “Chatbot …” |
 | **Computer** | “Hey Computer”, “Hey PC”, “Hey Laptop”, “Hey Machine”, “Hey this computer” | “Computer …” / “PC …” at the start of a command |
 | **Claude Code** | “Hey Claude Code”, “Hey Claude”, “Hey Claud”, “Hey cloud code” | “Claude Code …” / “Claude …” |
 | **Codex** | “Hey Codex”, “Hey Code X”, “Hey Codecs” | “Codex …” |
@@ -189,6 +200,45 @@ Settings → Recent sessions lists the last conversations on the PC (in memory).
 Phrases are matched fuzzily against punctuated/capitalised speech, anywhere in the utterance. Say the **bare agent name at the start** of the command to skip “hey” (e.g. “Claude, open the repo”).
 
 You can edit wake phrases in `server/agents/defs.js` (restart the server afterwards).
+
+---
+
+## Built-in free AI (no API key)
+
+The **AI Chat** agent answers general questions, writes, translates, explains and summarises. It talks to any OpenAI-compatible chat API and tries providers in order until one answers, so it works with **zero setup**:
+
+| Order | Provider | Key needed? | Notes |
+|---|---|---|---|
+| 1 | **Ollama** (local, `127.0.0.1:11434`) | No | Free, open-source models on your own PC, fully private and offline. Install from [ollama.com](https://ollama.com), then `ollama pull llama3.2`. Skipped automatically when not running. |
+| 1 | **LM Studio** (local, `127.0.0.1:1234`) | No | Same idea with a GUI: [lmstudio.ai](https://lmstudio.ai). Start its local server. |
+| 2 | **Groq**, **Google Gemini**, **OpenRouter** (`:free` models), **Cerebras**, **Mistral** | Yes — **free** tier key | Only used when you add a key. Faster and smarter than the keyless option. |
+| 3 | **OpenAI**, **DeepSeek**, **Custom** OpenAI-compatible URL | Yes — paid key | Only used when you add a key. |
+| 4 | **Pollinations.AI** (`text.pollinations.ai`) | **No** | Public, anonymous, open model. Rate-limited per IP (roughly one request every 30 seconds) and best-effort — great as a fallback, not for heavy use. |
+
+**Honest note:** only the local models and Pollinations need no key at all. Groq, Gemini, OpenRouter, Cerebras and Mistral are free but you sign up for a free key. No key is ever stored in this repository.
+
+### Adding a key (optional)
+
+Either set an environment variable before `start.cmd` (`GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `CEREBRAS_API_KEY`, `MISTRAL_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `HEY_AI_CUSTOM_API_KEY`), or edit `data/config.json` on your PC:
+
+```json
+"ai": {
+  "provider": "auto",
+  "providers": {
+    "groq":   { "apiKey": "gsk_...", "model": "llama-3.3-70b-versatile" },
+    "ollama": { "model": "llama3.2" },
+    "custom": { "baseUrl": "http://127.0.0.1:8080/v1", "apiKey": "", "model": "my-model" }
+  }
+}
+```
+
+- `provider`: `"auto"` (fallback chain) or one id to force, e.g. `"ollama"`.
+- `order`: optional list of ids to set your own order.
+- `providers.<id>.enabled: false` removes one from the chain; `model` overrides the default (providers retire model names from time to time).
+- `systemPrompt`, `maxTokens`, `timeoutMs`, `historyTurns` tune the replies.
+- `ui.smartRouting: false` turns off sending “Hey Logan” questions to AI Chat.
+
+Keys stay on your PC: they are read by the server only and never sent to the phone or browser. When a hosted provider answers, your question is sent to that provider; use Ollama/LM Studio if you want everything to stay on your machine.
 
 ---
 
@@ -278,7 +328,12 @@ The live config lives at **`data/config.json`** (created on first run; keep it o
   "speech": {
     "lang": "en-US",             // recognition language default (UI can override)
     "wakeWindowMs": 12000,       // how long to wait for a command after a wake word
-    "silenceMs": 1500            // pause that ends the command
+    "silenceMs": 1500,           // pause that ends the command
+    "autoStart": true            // start hands-free listening when the app opens
+  },
+  "wake": {
+    "phrases": ["hey logan", "hi logan", "hello logan", "okay logan", "hey logan ai"],
+    "ack": "Logan here."         // spoken acknowledgement for the assistant wake word
   },
   "ui": {
     "defaultAgent": "computer",  // used when no wake word is spoken
@@ -387,6 +442,7 @@ hey-ai-bridge/
 │       ├── defs.js         # agent catalog: wake phrases, colours, CLI defaults
 │       ├── registry.js     # availability detection for the UI
 │       ├── cli.js          # Claude Code / Codex / DSH / Workbuddy / Gemini adapters
+│       ├── llm.js          # built-in AI Chat: free/keyless + keyed providers, fallback chain
 │       └── computer.js     # built-in Computer agent (files, apps, lock, screenshot)
 ├── public/
 │   ├── index.html          # PWA shell
@@ -419,7 +475,7 @@ npm start             # start the server
 npm run dev           # restart on file changes
 ```
 
-The tests cover: wake-word routing (including the “open a new session” phrasing), the Computer agent’s intent parser and file search, config merging/env overrides, token auth + rate limiting, static path traversal protection, the REST API, and the SSE event flow for asynchronous commands.
+The tests cover: wake-word routing (including the “open a new session” phrasing), the Computer agent’s intent parser and file search, config merging/env overrides, token auth + rate limiting, static path traversal protection, the REST API, the SSE event flow for asynchronous commands, and the AI Chat provider chain (with a fake OpenAI-compatible server, so tests never call the internet).
 
 **Adding an agent:** add an entry to `server/agents/defs.js` (id, name, icon, colour, wake phrases, CLI defaults) and a matching `agents.<id>` block in `config.example.json`. The registry, UI and router pick it up automatically.
 

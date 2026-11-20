@@ -15,8 +15,9 @@ const { isAuthorized, createRateLimiter, clientIp } = require('./security');
 const { parseCommand } = require('./router');
 const { describeAgents } = require('./agents/registry');
 const { runCliAgent } = require('./agents/cli');
-const { handleComputerCommand } = require('./agents/computer');
-const { getAgentDef, GENERIC_WAKE } = require('./agents/defs');
+const { handleComputerCommand, looksLikeComputerTask } = require('./agents/computer');
+const { runLlmAgent, providerChain } = require('./agents/llm');
+const { getAgentDef, GENERIC_WAKE, DEFAULT_WAKE, DEFAULT_WAKE_ACK } = require('./agents/defs');
 const { ensureCertificate } = require('./tls');
 const { normalizeText, resolveStatic, truncate, getLanAddresses, randId } = require('./util');
 
@@ -41,7 +42,8 @@ const SETTINGS_WHITELIST = {
   'speech.silenceMs': { type: 'number', min: 600, max: 6000 },
   'speech.wakeWindowMs': { type: 'number', min: 5000, max: 60000 },
   'ui.speakReplies': { type: 'boolean' },
-  'ui.defaultAgent': { type: 'agent' }
+  'ui.defaultAgent': { type: 'agent' },
+  'ui.smartRouting': { type: 'boolean' }
 };
 
 /* ------------------------------------------------------------------ */
@@ -178,6 +180,10 @@ function publicSessionInfo(state) {
     ui: state.config.ui,
     agents: describeAgents(state.config),
     genericWake: GENERIC_WAKE,
+    wake: {
+      phrases: (state.config.wake && state.config.wake.phrases) || DEFAULT_WAKE,
+      ack: (state.config.wake && state.config.wake.ack) || DEFAULT_WAKE_ACK
+    },
     sessions: state.sessions.size
   };
 }
@@ -245,7 +251,7 @@ async function handleApi(state, req, res, url) {
   if (pathname === '/api/health' && method === 'GET') {
     return sendJson(res, 200, {
       ok: true,
-      app: 'Hey AI Bridge',
+      app: 'Hey Logan AI',
       version: PKG.version,
       time: new Date().toISOString(),
       requiresToken: true
@@ -257,7 +263,15 @@ async function handleApi(state, req, res, url) {
   }
 
   if (pathname === '/api/agents' && method === 'GET') {
-    return sendJson(res, 200, { ok: true, agents: describeAgents(state.config), genericWake: GENERIC_WAKE });
+    return sendJson(res, 200, {
+      ok: true,
+      agents: describeAgents(state.config),
+      genericWake: GENERIC_WAKE,
+      wake: {
+        phrases: (state.config.wake && state.config.wake.phrases) || DEFAULT_WAKE,
+        ack: (state.config.wake && state.config.wake.ack) || DEFAULT_WAKE_ACK
+      }
+    });
   }
 
   if (pathname === '/api/pairing' && method === 'GET') {
@@ -330,7 +344,8 @@ async function handleCommandRequest(state, req, res) {
 
   if (body.sync === true) {
     const result = await executeCommand(state, input);
-    return sendJson(res, result.ok === false ? 200 : 200, { ...result });
+    // Errors are reported as `ok: false` in a 200 body so clients can show the spoken reply.
+    return sendJson(res, 200, { ...result });
   }
 
   executeCommand(state, input).catch((err) => {
@@ -359,12 +374,17 @@ async function executeCommand(state, input) {
   const startedAt = Date.now();
 
   const routing = parseCommand(text, {
-    defaultAgent: (config.ui && config.ui.defaultAgent) || 'computer'
+    defaultAgent: (config.ui && config.ui.defaultAgent) || 'computer',
+    defaultWake: (config.wake && config.wake.phrases) || DEFAULT_WAKE,
+    wakeAck: (config.wake && config.wake.ack) || DEFAULT_WAKE_ACK
   });
 
   if (routing.generic) {
-    const speech =
-      'Which agent? Say “Hey Computer”, “Hey Claude Code”, “Hey Codex”, “Hey DeepSeek”, “Hey Workbuddy” or “Hey Gemini”.';
+    const names = describeAgents(config)
+      .filter((agent) => agent.enabled)
+      .map((agent) => `“Hey ${agent.name}”`);
+    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names[0] || '“Hey Computer”';
+    const speech = `Which agent? Say ${list}.`;
     state.hub.publish({
       type: 'agent:result',
       clientId,
@@ -382,7 +402,9 @@ async function executeCommand(state, input) {
 
   if (routing.needsTask) {
     const def = getAgentDef(routing.agentId);
-    const speech = `${def ? def.name : 'I'} here. What would you like me to do?`;
+    const speech = routing.defaultWake
+      ? `${routing.ack || DEFAULT_WAKE_ACK} What would you like me to do?`
+      : `${def ? def.name : 'I'} here. What would you like me to do?`;
     state.hub.publish({
       type: 'agent:result',
       clientId,
@@ -400,6 +422,24 @@ async function executeCommand(state, input) {
 
   let agentId = routing.agentId || (config.ui && config.ui.defaultAgent) || 'computer';
   if (input.agentId && getAgentDef(input.agentId) && !routing.matched) agentId = input.agentId;
+
+  // Smart routing: when nobody was named and the command would go to the
+  // Computer agent but reads like a general question ("Hey Logan, what is the
+  // capital of France?"), let the built-in AI chat answer instead of running a
+  // pointless file search.
+  const explicitAgent = Boolean(routing.agentId) || Boolean(input.agentId && !routing.matched);
+  let smartRouted = false;
+  if (
+    !explicitAgent &&
+    agentId === 'computer' &&
+    !(config.ui && config.ui.smartRouting === false) &&
+    !(config.agents && config.agents.chat && config.agents.chat.enabled === false) &&
+    providerChain(config).length > 0 &&
+    !looksLikeComputerTask(routing.task || text)
+  ) {
+    agentId = 'chat';
+    smartRouted = true;
+  }
 
   const def = getAgentDef(agentId);
   if (!def) {
@@ -428,6 +468,8 @@ async function executeCommand(state, input) {
     routing: {
       matched: routing.matched,
       generic: false,
+      defaultWake: Boolean(routing.defaultWake),
+      smartRouted,
       newSession: routing.newSession,
       wakePhrase: routing.wakePhrase,
       task: taskText
@@ -462,6 +504,27 @@ async function executeCommand(state, input) {
         def,
         config,
         prompt: taskText,
+        hooks: {
+          onChunk: (chunk, stream) => {
+            state.hub.publish({
+              type: 'agent:chunk',
+              clientId,
+              source,
+              sessionId: session.id,
+              agentId,
+              stream,
+              chunk: truncate(chunk, 4000)
+            });
+          }
+        }
+      });
+    } else if (def.kind === 'llm') {
+      result = await runLlmAgent({
+        agentId,
+        def,
+        config,
+        prompt: taskText,
+        session,
         hooks: {
           onChunk: (chunk, stream) => {
             state.hub.publish({
@@ -645,7 +708,7 @@ function serveScreenshot(state, res, rawName) {
     });
     fs.createReadStream(filePath).pipe(res);
   } catch {
-    sendJson(res, 404, { ok: false, error: 'Screenshot not found' });
+    return sendJson(res, 404, { ok: false, error: 'Screenshot not found' });
   }
 }
 
@@ -767,7 +830,9 @@ function printBanner(state) {
 
   const agents = describeAgents(config);
   const agentLines = agents.map((agent) => {
-    const status = agent.enabled ? 'ready' : 'not found';
+    const status = agent.kind === 'llm'
+      ? (agent.enabled ? `ready (${(agent.providers || []).join(' -> ')})` : 'no AI provider')
+      : agent.enabled ? 'ready' : 'not found';
     const hint = !agent.enabled && agent.install ? `  ->  ${agent.install}` : '';
     return `  ${agent.enabled ? '[ok]' : '[--]'} ${agent.name.padEnd(18)} ${status}${hint}`;
   });
@@ -775,7 +840,7 @@ function printBanner(state) {
   const lines = [
     '',
     '  ╔══════════════════════════════════════════════════════════════╗',
-    '  ║                    H E Y   A I   B R I D G E                 ║',
+    '  ║                   H E Y   L O G A N   A I                    ║',
     '  ╚══════════════════════════════════════════════════════════════╝',
     `  ${config.app.name} v${PKG.version}`,
     '',

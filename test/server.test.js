@@ -73,7 +73,7 @@ test('health endpoint is public', async () => {
   const data = await res.json();
   assert.equal(data.ok, true);
   assert.equal(data.requiresToken, true);
-  assert.equal(data.app, 'Hey AI Bridge');
+  assert.equal(data.app, 'Hey Logan AI');
 });
 
 test('protected endpoints reject missing or wrong tokens', async () => {
@@ -84,15 +84,15 @@ test('protected endpoints reject missing or wrong tokens', async () => {
   assert.equal(wrong.status, 401);
 });
 
-test('session-info lists all six agents and server urls', async () => {
+test('session-info lists all seven agents and server urls', async () => {
   const res = await fetch(`${server.base}/api/session-info`, { headers: authHeaders() });
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.equal(data.ok, true);
-  assert.equal(data.agents.length, 6);
+  assert.equal(data.agents.length, 7);
 
   const ids = data.agents.map((agent) => agent.id);
-  for (const id of ['computer', 'claude-code', 'codex', 'deepseek', 'workbuddy', 'gemini']) {
+  for (const id of ['computer', 'chat', 'claude-code', 'codex', 'deepseek', 'workbuddy', 'gemini']) {
     assert.ok(ids.includes(id), `missing agent ${id}`);
   }
 
@@ -109,7 +109,7 @@ test('serves the PWA shell and blocks path traversal', async () => {
   const index = await fetch(`${server.base}/`);
   assert.equal(index.status, 200);
   const html = await index.text();
-  assert.ok(html.includes('Hey AI'));
+  assert.ok(html.includes('Hey Logan'));
   assert.ok(html.includes('/app.js'));
   assert.ok(html.includes('/voice.js'));
 

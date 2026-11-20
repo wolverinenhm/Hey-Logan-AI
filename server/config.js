@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { randomToken, deepMerge } = require('./util');
+const { DEFAULT_WAKE, DEFAULT_WAKE_ACK } = require('./agents/defs');
 
 const APP_ROOT = path.resolve(__dirname, '..');
 const PKG = require(path.join(APP_ROOT, 'package.json'));
@@ -32,7 +33,7 @@ function toPort(value, fallback) {
 function defaultConfig() {
   return {
     app: {
-      name: 'Hey AI Bridge',
+      name: 'Hey Logan AI',
       version: PKG.version
     },
     server: {
@@ -49,14 +50,36 @@ function defaultConfig() {
     speech: {
       lang: 'en-US',
       wakeWindowMs: 12000,
-      silenceMs: 1500
+      silenceMs: 1500,
+      // Start listening for the wake word as soon as the app opens.
+      autoStart: true
+    },
+    // The assistant's own wake word. Override in data/config.json.
+    wake: {
+      phrases: DEFAULT_WAKE.slice(),
+      ack: DEFAULT_WAKE_ACK
     },
     ui: {
       defaultAgent: 'computer',
-      speakReplies: true
+      speakReplies: true,
+      // Send general questions ("what is...", "write me...") to the AI chat
+      // agent instead of the Computer agent when no agent is named.
+      smartRouting: true
+    },
+    // Built-in AI chat (agents/llm.js). Works with no key via Pollinations.AI,
+    // or with a local Ollama / LM Studio. Add free or paid keys under
+    // ai.providers.<id>.apiKey (or env vars such as GROQ_API_KEY).
+    ai: {
+      provider: 'auto',
+      order: [],
+      timeoutMs: 60000,
+      maxTokens: 600,
+      historyTurns: 4,
+      providers: {}
     },
     agents: {
       computer: { enabled: true },
+      chat: { enabled: true },
       'claude-code': { enabled: 'auto', command: 'claude', args: ['-p', '{prompt}'], timeoutMs: 300000, cwd: '' },
       codex: { enabled: 'auto', command: 'codex', args: ['exec', '{prompt}'], timeoutMs: 300000, cwd: '' },
       deepseek: { enabled: 'auto', command: 'dsh', args: ['headless', '{prompt}'], timeoutMs: 900000, cwd: '' },

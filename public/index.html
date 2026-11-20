@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#070b16" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Talk to your PC and your AI agents from your phone or across the room." />
-  <title>Hey AI Bridge</title>
+  <title>Hey Logan AI</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -32,7 +32,7 @@
         </svg>
       </span>
       <div class="brand-text">
-        <h1>Hey AI <span>Bridge</span></h1>
+        <h1>Hey Logan <span>AI</span></h1>
         <p id="connLabel">connecting…</p>
       </div>
     </div>
@@ -64,11 +64,12 @@
 
       <div class="status-line">
         <span class="dot" id="statusDot"></span>
-        <span id="statusText">Tap the orb to start listening</span>
+        <span id="statusText">Say “Hey Logan” to wake me up</span>
       </div>
 
       <p class="say-hint" id="sayHint">
-        Say <em>“Hey Claude Code, …”</em> or <em>“Hey Computer, find my tax PDF in Downloads”</em>
+        Say <em>“Hey Logan”</em>, wait for the answer, then give your command — or say
+        <em>“Hey Claude Code, …”</em> / <em>“Hey Computer, find my tax PDF in Downloads”</em>
       </p>
 
       <div class="controls">
@@ -165,6 +166,10 @@
           <select id="voiceSelect"></select>
         </div>
         <label class="check-row">
+          <input id="autoListenToggle" type="checkbox" />
+          <span>Always listen for “Hey Logan” — start hands-free as soon as the app opens</span>
+        </label>
+        <label class="check-row">
           <input id="ttsToggle" type="checkbox" />
           <span>Speak replies on this device</span>
         </label>
@@ -193,7 +198,7 @@
       <section>
         <h3>About</h3>
         <p class="muted small">
-          Hey AI Bridge <span id="versionLabel">v1.0.0</span> — a local voice bridge for your PC and AI agents.
+          Hey Logan AI <span id="versionLabel">v1.1.0</span> — a local voice bridge for your PC and AI agents.
           Voice recognition uses this browser’s speech service (Chrome/Edge); audio may be processed by the browser vendor.
           The bridge itself never sends your commands to any additional cloud service.
         </p>
@@ -202,6 +207,8 @@
   </dialog>
 
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script src="/native-voice.js"></script>
 
   <script src="/voice.js"></script>
   <script src="/app.js"></script>

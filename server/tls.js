@@ -68,8 +68,8 @@ function ensureCertificate(dataDir) {
 
   const pems = selfsigned.generate(
     [
-      { name: 'commonName', value: 'Hey AI Bridge' },
-      { name: 'organizationName', value: 'Hey AI Bridge (local)' }
+      { name: 'commonName', value: 'Hey Logan AI' },
+      { name: 'organizationName', value: 'Hey Logan AI (local)' }
     ],
     {
       days: 3650,
